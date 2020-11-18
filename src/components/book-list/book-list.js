@@ -2,22 +2,26 @@ import React, {Component} from 'react'
 import BookListItem from "../book-list-item";
 import {connect} from "react-redux";
 import withBookstoreService from "../hoc/with-bookstore-service";
-import booksLoaded from '../../actions/index'
+import {booksLoaded, booksRequested} from '../../actions/index'
 import './book-list.css'
+import Spinner from '../spinner/spinner'
 
 class BookList extends Component {
 
     componentDidMount() {
         //    receive data
-        const {bookstoreService} = this.props;
-        const data = bookstoreService.getBooks();
-        //    dispatch action to store
-        this.props.booksLoaded(data)
 
+        const { bookstoreService, booksLoaded, booksRequested } = this.props;
+        booksRequested()
+        bookstoreService.getBooks()
+            .then((data) =>{booksLoaded(data)})
     }
 
     render() {
         const {books} = this.props;
+        if(this.props.loading){
+            return <Spinner />
+        }
         return (
             <ul className='book-list'>
                 {
@@ -32,10 +36,10 @@ class BookList extends Component {
     }
 }
 
-const mapStateToProps = ({books}) => {
-    return {books}
+const mapStateToProps = ({books, loading}) => {
+    return {books, loading}
 }
 const mapDispatchToProps = {
-    booksLoaded
+    booksLoaded, booksRequested
 }
 export default withBookstoreService()(connect(mapStateToProps, mapDispatchToProps)(BookList))
