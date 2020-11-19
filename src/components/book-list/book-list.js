@@ -2,32 +2,31 @@ import React, {Component} from 'react'
 import BookListItem from "../book-list-item";
 import {connect} from "react-redux";
 import withBookstoreService from "../hoc/with-bookstore-service";
-import {booksLoaded, booksRequested} from '../../actions/index'
+import { fetchBooks, bookAddedToCart} from '../../actions/index'
 import './book-list.css'
 import Spinner from '../spinner/spinner'
+import ErrorIndicator from "../error-indicator";
 
 class BookList extends Component {
 
     componentDidMount() {
-        //    receive data
-
-        const { bookstoreService, booksLoaded, booksRequested } = this.props;
-        booksRequested()
-        bookstoreService.getBooks()
-            .then((data) =>{booksLoaded(data)})
+        this.props.fetchBooks()
     }
 
     render() {
-        const {books} = this.props;
+        const {books, error, onAddedToCart} = this.props;
         if(this.props.loading){
             return <Spinner />
+        }
+        if(error){
+            return <ErrorIndicator />
         }
         return (
             <ul className='book-list'>
                 {
                     books.map(book => {
                         return (
-                            <li key={book.id}><BookListItem book={book}/></li>
+                            <li key={book.id}><BookListItem book={book} onAddedToCart={() => onAddedToCart(book.id)}/></li>
                         )
                     })
                 }
@@ -36,10 +35,16 @@ class BookList extends Component {
     }
 }
 
-const mapStateToProps = ({books, loading}) => {
-    return {books, loading}
+const mapStateToProps = ({books, loading, error}) => {
+    return {books, loading, error}
 }
-const mapDispatchToProps = {
-    booksLoaded, booksRequested
+
+const mapDispatchToProps = (dispatch, ownProps) => {
+    const {bookstoreService} = ownProps;
+    return{
+        fetchBooks: fetchBooks(bookstoreService, dispatch),
+        onAddedToCart: (id) => dispatch(bookAddedToCart(id))
+    }
 }
+
 export default withBookstoreService()(connect(mapStateToProps, mapDispatchToProps)(BookList))
